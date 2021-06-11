@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button, Card, CardActions, CardContent, TextField, Grid } from '@material-ui/core';
 import DateFnsUtils from '@date-io/date-fns';
 import WorkBooklist from './WorkBooklist'
+import axios from 'axios'
 
 import {
     MuiPickersUtilsProvider,
@@ -9,6 +10,13 @@ import {
   } from '@material-ui/pickers';
 
 export default function WorkBook() {
+    const dbid = '60c2ec99a8bf076b5f64d110'; //id for JSONbin
+    const config = {
+        headers:{
+            'Content-Type':'application/json',
+            'X-Master-Key':'$2b$10$CyqZFDnNsaXSs6EKER7s1Ob3lE31lU3BLeA2wVXDfWEm6lNeS6IX.' //master key in JSONbin
+        }
+    }
     const today = new Date();
     const [users, setUserList] = useState([]);
     const [newuser, setUsers] = useState({
@@ -21,9 +29,27 @@ export default function WorkBook() {
     const [isvalidate, setValidation] = useState(false)
     const [isemailvalid, setEmailValid] = useState(true)
 
+    useEffect(() => {
+        console.warn(`https://api.jsonbin.io/v3/b/${dbid}/latest`)
+      axios.get(`https://api.jsonbin.io/v3/b/${dbid}/latest`, config)
+      .then(res => {
+          setUserList(res.data.record)
+      })
+    },[])
+
     const deleteList = (id) => {
         let updatedlist = users.filter(user => user.enterpriseID !== id);
-        setUserList(updatedlist)
+        axios.put(`https://api.jsonbin.io/v3/b/${dbid}`,
+        updatedlist, config)
+            .then(res => {
+                console.log('success')
+                setUserList(updatedlist)
+                console.warn('Deleted Successfully!')
+
+            })
+            .catch(err => {
+                console.error(err)
+            })
     }
 
     const handleDateChange = (date) => {
@@ -73,11 +99,18 @@ export default function WorkBook() {
         const newData = [...users, newuser]
         setValidation(true)
         if (newuser.firstName !== '' && newuser.lastName !== '' && newuser.email !== '' && isemailvalid === true && newuser.enterpriseID !== '') {
-            setUserList(newData);
-            alert('Data Save Successfully!')
-        }
+            axios.put(`https://api.jsonbin.io/v3/b/${dbid}`,
+            newData, config)
+            .then(res => {
+                console.log('success')
+                setUserList(newData);
+                alert('Data Save Successfully!')
 
-        console.warn(users);
+            })
+            .catch(err => {
+                console.error(err)
+            })
+        }
     }
     return (
         <div>
